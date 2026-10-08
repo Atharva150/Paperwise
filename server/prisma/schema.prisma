@@ -1,0 +1,58 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+}
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  createdAt DateTime  @default(now())
+  isActive  Boolean   @default(true)
+  document  Document?
+  messages  Message[]
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  sessionId Int
+  content   String
+  role      Role
+  createdAt DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id        Int      @id @default(autoincrement())
+  content   String
+  isValid   Boolean
+  filename  String
+  sessionId Int      @unique
+  chunks    Chunks[]
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Chunks {
+  id         Int      @id @default(autoincrement())
+  text       String
+  documentId Int
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  user
+  assistant
+}
